@@ -1,12 +1,24 @@
+<div align="center">
+
+<img src="assets/build-with-gemini-banner.png" alt="Build with Gemini" width="100%" />
+
 # 🚀 LaunchKit — Idea-to-Prototype Website Agent
 ### Build with Gemini · Track 3 Project
 
 > **One-liner:** Describe your startup or side-project idea in one sentence → LaunchKit builds a live prototype website with AI-generated visual assets, a working **waitlist**, and subscriber analytics, all hosted on Google Cloud.
 
+<br/>
+
+![Build with Gemini](https://img.shields.io/badge/Build%20with%20Gemini-World%20Tour-4285F4?logo=google&logoColor=white)
+![Track 3](https://img.shields.io/badge/Track%203-Agent--First%20Apps-EA4335)
+![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Firestore%20%7C%20GCS%20%7C%20Cloud%20Run-4285F4?logo=googlecloud&logoColor=white)
+![Built with ADK](https://img.shields.io/badge/Built%20with-ADK%20%2B%20agents--cli-34A853)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-innovatorved%2Fbuildwithgemini--launchkit-blue?logo=github)](https://github.com/innovatorved/buildwithgemini-launchkit)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](https://www.python.org/)
-[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Firestore%20%7C%20GCS%20%7C%20Cloud%20Run-orange?logo=googlecloud)](https://cloud.google.com/)
-[![ADK 2.11](https://img.shields.io/badge/ADK-2.11-green)](https://github.com/google/adk)
+
+<sub>📖 <a href="https://cszhu.github.io/build-with-gemini/">Lab Guide</a> · 🛠️ <a href="https://google.github.io/agents-cli/guide/getting-started/">agents-cli</a> · 🤖 <a href="https://google.github.io/adk-docs/">ADK</a> · 🏅 <a href="https://developers.google.com/profile/badges/events/community/build-with-gemini/track3-software-developer/award?utm_source=events-with-google&utm_medium=et&utm_campaign=FY26-Q3-BuildwithGemini&utm_content=track3_appbuilders&utm_term=-">Claim Skill Badge</a></sub>
+
+</div>
 
 ---
 

@@ -1,285 +1,672 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚀 LaunchKit — Idea-to-Prototype Website Agent</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Material+Symbols+Outlined">
+<title>LaunchKit — Build with Gemini · Idea-to-Prototype Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Google+Sans+Text:wght@400;500;600&family=Roboto+Mono:wght@400;500&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
   :root {
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
-    --accent-light: #eef2ff;
-    --bg: #0b0f19;
-    --card-bg: #111827;
-    --chat-bg: #1e293b;
-    --border: #334155;
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
+    --google-blue: #1a73e8;
+    --google-blue-hover: #1557b0;
+    --google-blue-container: #e8f0fe;
+    --google-on-blue-container: #174ea6;
+    --google-red: #ea4335;
+    --google-yellow: #fbbc04;
+    --google-green: #34a853;
+    
+    /* Light Theme (Default Google Material 3) */
+    --bg-page: #f8fafd;
+    --bg-surface: #ffffff;
+    --bg-surface-variant: #f0f4f9;
+    --bg-surface-elevated: #ffffff;
+    --border-color: #e0e3e7;
+    --border-subtle: #edf2f7;
+    --text-primary: #1f1f1f;
+    --text-secondary: #444746;
+    --text-tertiary: #747775;
+    --card-shadow: 0 1px 3px rgba(60,64,67,0.12), 0 1px 2px rgba(60,64,67,0.24);
+    --card-shadow-hover: 0 4px 12px rgba(60,64,67,0.15);
+    --input-shadow: 0 1px 4px rgba(60,64,67,0.1);
   }
+
+  [data-theme="dark"] {
+    --google-blue: #8ab4f8;
+    --google-blue-hover: #aecbfa;
+    --google-blue-container: #004a77;
+    --google-on-blue-container: #c2e7ff;
+    
+    /* Dark Theme (Gemini Dark Surface) */
+    --bg-page: #131314;
+    --bg-surface: #1e1f20;
+    --bg-surface-variant: #282a2c;
+    --bg-surface-elevated: #282a2c;
+    --border-color: #36373a;
+    --border-subtle: #2c2d30;
+    --text-primary: #e3e3e3;
+    --text-secondary: #c4c7c5;
+    --text-tertiary: #8e918f;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    --card-shadow-hover: 0 6px 16px rgba(0,0,0,0.6);
+    --input-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+
   * { box-sizing: border-box; }
+  
   body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background: var(--bg);
+    font-family: 'Google Sans Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-page);
     color: var(--text-primary);
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
+
+  /* Google 4-Color Accent Bar */
+  .google-accent-bar {
+    height: 4px;
+    width: 100%;
+    background: linear-gradient(90deg, #4285F4 0%, #4285F4 25%, #EA4335 25%, #EA4335 50%, #FBBC04 50%, #FBBC04 75%, #34A853 75%, #34A853 100%);
+    z-index: 20;
+    flex-shrink: 0;
+  }
+
   header {
-    background: rgba(17, 24, 39, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 1.5rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     z-index: 10;
+    flex-shrink: 0;
   }
-  .brand { display: flex; align-items: center; gap: 0.75rem; }
-  .logo-badge {
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    color: #fff;
+
+  .brand-group {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .gemini-sparkle-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--bg-surface-variant);
+  }
+
+  .gemini-sparkle-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .brand-title-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .brand-title {
+    font-family: 'Google Sans', sans-serif;
     font-size: 1.25rem;
-    font-weight: 800;
-    padding: 0.4rem 0.65rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    margin: 0;
   }
-  .brand-text h1 { margin: 0; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
-  .brand-text p { margin: 0; font-size: 0.8rem; color: var(--text-secondary); }
-  
-  .header-actions { display: flex; gap: 0.5rem; }
-  .pill-btn {
-    background: #1e293b;
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    padding: 0.35rem 0.75rem;
+
+  .badge-gemini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: var(--google-blue-container);
+    color: var(--google-on-blue-container);
+    padding: 0.2rem 0.6rem;
     border-radius: 9999px;
-    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--bg-surface-variant);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
     text-decoration: none;
+    transition: all 0.2s ease;
   }
-  .pill-btn:hover { background: #334155; color: #fff; border-color: var(--accent); }
 
-  #quick-prompts {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding: 0.6rem 1.5rem;
-    background: #0f172a;
-    border-bottom: 1px solid rgba(51, 65, 85, 0.4);
-    scrollbar-width: none;
+  .header-btn:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
   }
-  #quick-prompts::-webkit-scrollbar { display: none; }
-  .quick-chip {
+
+  .header-btn .material-symbols-outlined {
+    font-size: 1.05rem;
+  }
+
+  /* Quick chips */
+  #quick-prompts-container {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.5rem 1.5rem;
+    overflow-x: auto;
     white-space: nowrap;
-    background: rgba(30, 41, 59, 0.7);
-    border: 1px solid rgba(51, 65, 85, 0.6);
-    color: #cbd5e1;
-    font-size: 0.8rem;
+    scrollbar-width: none;
+    display: flex;
+    gap: 0.6rem;
+    flex-shrink: 0;
+  }
+  #quick-prompts-container::-webkit-scrollbar { display: none; }
+
+  .quick-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--bg-surface-variant);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 500;
     padding: 0.35rem 0.85rem;
-    border-radius: 9999px;
+    border-radius: 16px;
     cursor: pointer;
     transition: all 0.2s ease;
+    user-select: none;
   }
+
   .quick-chip:hover {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
+    background: var(--google-blue-container);
+    color: var(--google-on-blue-container);
+    border-color: var(--google-blue);
     transform: translateY(-1px);
   }
 
+  /* Chat Log */
   #log {
     flex: 1;
     overflow-y: auto;
     padding: 1.5rem;
-    max-width: 900px;
+    max-width: 860px;
     width: 100%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
   }
-  .msg { display: flex; flex-direction: column; width: 100%; }
-  .msg.user { align-items: flex-end; }
-  .msg.agent { align-items: flex-start; }
-  
-  .bubble {
-    display: inline-block;
-    padding: 0.85rem 1.15rem;
-    border-radius: 16px;
-    background: var(--chat-bg);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    text-align: left;
-    max-width: 85%;
-    white-space: pre-wrap;
-    line-height: 1.55;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  }
-  .msg.user .bubble {
-    background: linear-gradient(135deg, var(--accent), #4f46e5);
-    color: #fff;
-    border: none;
-    border-bottom-right-radius: 4px;
-  }
-  .msg.agent .bubble { border-bottom-left-radius: 4px; }
-  .bubble.rich {
-    background: transparent;
-    border: none;
-    padding: 0;
-    max-width: 100%;
-    white-space: normal;
-    box-shadow: none;
-  }
-  
-  .bubble a { color: #818cf8; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
-  .bubble a:hover { color: #a5b4fc; }
 
-  form {
+  .msg-row {
     display: flex;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border);
-    background: var(--card-bg);
-    max-width: 900px;
     width: 100%;
-    margin: 0 auto;
+    gap: 0.75rem;
   }
-  input {
-    flex: 1;
-    padding: 0.85rem 1.25rem;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    font-size: 0.95rem;
-    background: #0b0f19;
-    color: #fff;
-    outline: none;
-    transition: border-color 0.2s ease;
-    font-family: inherit;
+
+  .msg-row.user {
+    justify-content: flex-end;
   }
-  input:focus { border-color: var(--accent); }
-  button {
-    padding: 0.85rem 1.5rem;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--accent), #4f46e5);
-    color: #fff;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
+
+  .msg-row.agent {
+    justify-content: flex-start;
+  }
+
+  .msg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 4px;
+    background: var(--bg-surface-variant);
+    border: 1px solid var(--border-color);
   }
-  button:hover { opacity: 0.95; transform: translateY(-1px); }
 
-  /* A2UI Component Render Styles */
+  .msg-avatar svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .msg-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+  }
+
+  .msg-row.user .msg-content {
+    align-items: flex-end;
+  }
+
+  .bubble {
+    padding: 0.85rem 1.2rem;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    text-align: left;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg-row.user .bubble {
+    background: var(--google-blue-container);
+    color: var(--google-on-blue-container);
+    border-bottom-right-radius: 4px;
+    font-weight: 500;
+  }
+
+  .msg-row.agent .bubble {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+    border-bottom-left-radius: 4px;
+  }
+
+  .bubble.rich {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .bubble a {
+    color: var(--google-blue);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* Live Link Card */
+  .live-prototype-card {
+    margin-top: 0.85rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--google-blue);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: var(--card-shadow);
+    flex-wrap: wrap;
+  }
+
+  .live-proto-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .live-proto-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--google-blue);
+  }
+
+  .live-proto-url {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .live-proto-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .proto-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .proto-btn.primary {
+    background: var(--google-blue);
+    color: #ffffff;
+    border: none;
+  }
+  .proto-btn.primary:hover {
+    background: var(--google-blue-hover);
+    box-shadow: 0 2px 6px rgba(26,115,232,0.4);
+  }
+
+  .proto-btn.secondary {
+    background: var(--bg-surface-variant);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+  }
+  .proto-btn.secondary:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+  }
+
+  /* A2UI Component Render Styles (Material 3) */
   .a2card {
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 1.25rem;
-    background: #1e293b;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    background: var(--bg-surface);
+    box-shadow: var(--card-shadow);
     max-width: 100%;
     width: 100%;
+    transition: box-shadow 0.2s ease;
+  }
+  .a2card:hover {
+    box-shadow: var(--card-shadow-hover);
   }
   .a2card + .a2card, .a2col > .a2card { margin-top: 0.75rem; }
   .a2col { display: flex; flex-direction: column; gap: 0.6rem; }
   .a2row { display: flex; flex-direction: row; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
   .a2row.between { justify-content: space-between; }
-  .a2text { margin: 0; line-height: 1.5; }
-  .a2text.a2-h1 { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
-  .a2text.a2-h2 { font-size: 1.3rem; font-weight: 700; color: #f1f5f9; }
-  .a2text.a2-h3 { font-size: 1.15rem; font-weight: 600; color: #e2e8f0; }
-  .a2text.a2-h4 { font-size: 1.05rem; font-weight: 600; color: #cbd5e1; }
-  .a2text.a2-caption { font-size: 0.85rem; color: #94a3b8; }
-  .a2divider { border: none; border-top: 1px solid var(--border); margin: 0.6rem 0; width: 100%; }
-  .a2img { max-width: 100%; border-radius: 12px; display: block; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
-  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.35rem; line-height: 1; vertical-align: middle; color: #818cf8; }
-  
-  .live-link-box {
-    margin-top: 0.75rem;
-    background: rgba(99, 102, 241, 0.15);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
+  .a2text { margin: 0; line-height: 1.5; font-family: 'Google Sans Text', sans-serif; }
+  .a2text.a2-h1 { font-family: 'Google Sans', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+  .a2text.a2-h2 { font-family: 'Google Sans', sans-serif; font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+  .a2text.a2-h3 { font-family: 'Google Sans', sans-serif; font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+  .a2text.a2-h4 { font-family: 'Google Sans', sans-serif; font-size: 1rem; font-weight: 600; color: var(--text-secondary); }
+  .a2text.a2-caption { font-size: 0.85rem; color: var(--text-tertiary); }
+  .a2divider { border: none; border-top: 1px solid var(--border-color); margin: 0.6rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 12px; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.35rem; line-height: 1; vertical-align: middle; color: var(--google-blue); }
+
+  /* Gemini Floating Prompt Bar */
+  .prompt-container {
+    padding: 0.75rem 1.5rem 1.25rem;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    flex-shrink: 0;
+  }
+
+  form#form {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    background: var(--bg-surface-variant);
+    border: 1px solid var(--border-color);
+    border-radius: 28px;
+    padding: 0.35rem 0.5rem 0.35rem 1.25rem;
+    box-shadow: var(--input-shadow);
+    transition: all 0.2s ease;
   }
-  .live-link-box a {
-    color: #a5b4fc;
-    font-weight: 700;
-    text-decoration: none;
-    font-family: monospace;
+
+  form#form:focus-within {
+    border-color: var(--google-blue);
+    background: var(--bg-surface);
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.2), var(--card-shadow);
+  }
+
+  .prompt-leading-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 0.75rem;
+    color: var(--text-tertiary);
+  }
+
+  input#input {
+    flex: 1;
+    border: none;
+    background: transparent;
     font-size: 0.95rem;
+    color: var(--text-primary);
+    font-family: inherit;
+    outline: none;
+    padding: 0.6rem 0;
   }
-  .live-link-box a:hover { text-decoration: underline; }
+
+  input#input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  button#send-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--google-blue);
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  button#send-btn:hover {
+    background: var(--google-blue-hover);
+    transform: scale(1.05);
+  }
+
+  button#send-btn:active {
+    transform: scale(0.95);
+  }
+
+  button#send-btn .material-symbols-outlined {
+    font-size: 1.25rem;
+    color: #ffffff;
+  }
+
+  /* Shimmer Thinking Indicator */
+  .thinking-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    padding: 0.6rem 0.85rem;
+  }
+
+  .thinking-sparkle {
+    animation: rotateSparkle 2s linear infinite;
+  }
+
+  @keyframes rotateSparkle {
+    0% { transform: rotate(0deg) scale(0.9); }
+    50% { transform: rotate(180deg) scale(1.1); }
+    100% { transform: rotate(360deg) scale(0.9); }
+  }
+
+  .shimmer-text {
+    background: linear-gradient(90deg, #4285F4 0%, #EA4335 30%, #FBBC04 70%, #34A853 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 2.5s linear infinite;
+    font-weight: 600;
+  }
+
+  @keyframes shine {
+    to { background-position: 200% center; }
+  }
+
+  .footer-sub {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-tertiary);
+    margin-top: 0.35rem;
+  }
 </style>
 </head>
 <body>
 
+<!-- Google 4-Color Stripe -->
+<div class="google-accent-bar"></div>
+
+<!-- App Header -->
 <header>
-  <div class="brand">
-    <div class="logo-badge">🚀</div>
-    <div class="brand-text">
-      <h1>LaunchKit</h1>
-      <p>Idea-to-Prototype Website Agent with Live Waitlists</p>
+  <div class="brand-group">
+    <div class="gemini-sparkle-icon">
+      <!-- Google Gemini Sparkle SVG -->
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="url(#sparkle_grad)"/>
+        <defs>
+          <linearGradient id="sparkle_grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#4285F4"/>
+            <stop offset="0.33" stop-color="#EA4335"/>
+            <stop offset="0.66" stop-color="#FBBC04"/>
+            <stop offset="1" stop-color="#34A853"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="brand-title-wrap">
+      <h1 class="brand-title">LaunchKit</h1>
+      <span class="badge-gemini">Build with Gemini</span>
     </div>
   </div>
+
   <div class="header-actions">
-    <a href="/api/projects" target="_blank" class="pill-btn">📦 Projects API</a>
-    <button type="button" class="pill-btn" onclick="clearChat()">🧹 Reset</button>
+    <a href="/api/projects" target="_blank" class="header-btn" title="View Projects JSON">
+      <span class="material-symbols-outlined">folder_open</span>
+      <span>Projects</span>
+    </a>
+    <a href="https://github.com/innovatorved/buildwithgemini-launchkit" target="_blank" rel="noopener" class="header-btn" title="GitHub Repository">
+      <span class="material-symbols-outlined">code</span>
+      <span>GitHub</span>
+    </a>
+    <button type="button" class="header-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle Light/Dark Theme">
+      <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+    </button>
+    <button type="button" class="header-btn" onclick="clearChat()" title="Reset Conversation">
+      <span class="material-symbols-outlined">restart_alt</span>
+    </button>
   </div>
 </header>
 
-<div id="quick-prompts">
-  <div class="quick-chip" onclick="sendPrompt('Build a prototype site for StudyBuddy — find study partners nearby.')">💡 StudyBuddy (Study Partner Finder)</div>
-  <div class="quick-chip" onclick="sendPrompt('Build a prototype site for CoffeePulse — artisan single-origin coffee subscription.')">☕ CoffeePulse (Coffee Subscription)</div>
-  <div class="quick-chip" onclick="sendPrompt('Build a prototype site for DevSprint — AI agile sprint planner for engineering teams.')">⚡ DevSprint (Sprint Planner)</div>
-  <div class="quick-chip" onclick="sendPrompt('Make studybuddy dark mode with a neon purple glow and pricing tier.')">🎨 Dark Mode & Pricing</div>
-  <div class="quick-chip" onclick="sendPrompt('How is my waitlist doing for studybuddy?')">📊 Check Waitlist Growth</div>
+<!-- Material 3 Quick Assist Chips -->
+<div id="quick-prompts-container">
+  <div class="quick-chip" onclick="sendPrompt('Build a prototype site for StudyBuddy — find study partners nearby.')">
+    <span class="material-symbols-outlined" style="font-size:1.1rem; color:#4285F4;">school</span>
+    <span>StudyBuddy (Study Finder)</span>
+  </div>
+  <div class="quick-chip" onclick="sendPrompt('Build a prototype site for CoffeePulse — artisan single-origin coffee subscription.')">
+    <span class="material-symbols-outlined" style="font-size:1.1rem; color:#EA4335;">local_cafe</span>
+    <span>CoffeePulse (Coffee Delivery)</span>
+  </div>
+  <div class="quick-chip" onclick="sendPrompt('Build a prototype site for DevSprint — AI agile sprint planner for engineering teams.')">
+    <span class="material-symbols-outlined" style="font-size:1.1rem; color:#34A853;">bolt</span>
+    <span>DevSprint (Sprint Planner)</span>
+  </div>
+  <div class="quick-chip" onclick="sendPrompt('Make studybuddy dark mode with a neon purple glow and pricing tier.')">
+    <span class="material-symbols-outlined" style="font-size:1.1rem; color:#FBBC04;">palette</span>
+    <span>Dark Mode & Pricing</span>
+  </div>
+  <div class="quick-chip" onclick="sendPrompt('How is my waitlist doing for studybuddy?')">
+    <span class="material-symbols-outlined" style="font-size:1.1rem; color:#4285F4;">monitoring</span>
+    <span>Check Waitlist Growth</span>
+  </div>
 </div>
 
+<!-- Chat Log -->
 <div id="log">
-  <div class="msg agent">
-    <div class="bubble">
-👋 **Welcome to LaunchKit!** 
+  <div class="msg-row agent">
+    <div class="msg-avatar">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="url(#sparkle_msg)"/>
+        <defs>
+          <linearGradient id="sparkle_msg" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#4285F4"/>
+            <stop offset="0.33" stop-color="#EA4335"/>
+            <stop offset="0.66" stop-color="#FBBC04"/>
+            <stop offset="1" stop-color="#34A853"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div class="msg-content">
+      <div class="bubble">
+👋 **Welcome to LaunchKit — Build with Gemini!**
 
-Give me a one-line idea for your startup or side project, and I will:
-1. 💡 Propose a brand name, tagline, 3 features, and custom color palette
-2. 🎨 Generate AI hero assets and logos
-3. 🌐 Build a responsive Tailwind CSS landing page with a **live waitlist form**
-4. 🚀 Publish it to Google Cloud with a live preview link (`/p/<project-id>`)
-5. 📈 Track subscriber growth and plot signups analytics
+Tell me your startup or side project idea in one sentence. I will autonomously:
+1. 💡 **Architect brand identity:** Name, tagline, features, persona & color palette
+2. 🎨 **Generate AI visual assets:** High-res hero imagery with **Nano Banana 2 Lite** & logos
+3. 🌐 **Build live prototype website:** Responsive Tailwind CSS landing page with a **working waitlist form**
+4. 🚀 **Publish to Cloud:** Hosted on Google Cloud with live URL (`/p/<project-id>`)
+5. 📊 **Analyze subscriber growth:** Real-time Firestore waitlist tracking & velocity charts
 
-Try clicking one of the chips above or type your startup idea below!
+Click one of the suggested chips above or describe your idea below!
+      </div>
     </div>
   </div>
 </div>
 
-<form id="form">
-  <input id="input" placeholder="Describe your startup idea (e.g. 'An app that helps remote workers book coworking desks by the hour')..." autocomplete="off" autofocus>
-  <button type="submit">
-    <span>Launch</span>
-    <span class="material-symbols-outlined" style="font-size:1.1rem; color:#fff;">send</span>
-  </button>
-</form>
+<!-- Gemini Prompt Bar -->
+<div class="prompt-container">
+  <form id="form">
+    <div class="prompt-leading-icon">
+      <span class="material-symbols-outlined" style="font-size:1.3rem;">auto_awesome</span>
+    </div>
+    <input id="input" placeholder="Describe your startup idea or request an iteration..." autocomplete="off" autofocus>
+    <button type="submit" id="send-btn" title="Send message to LaunchKit">
+      <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
+  </form>
+  <div class="footer-sub">LaunchKit uses Gemini 2.5 Flash on Vertex AI & Google Cloud Run.</div>
+</div>
 
 <script>
 const log = document.getElementById("log");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
+const themeIcon = document.getElementById("theme-icon");
+
+// Theme management
+function initTheme() {
+  const saved = localStorage.getItem("launchkit-theme") || "light";
+  document.documentElement.setAttribute("data-theme", saved);
+  updateThemeIcon(saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "light";
+  const next = current === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("launchkit-theme", next);
+  updateThemeIcon(next);
+}
+
+function updateThemeIcon(theme) {
+  if (themeIcon) {
+    themeIcon.textContent = theme === "dark" ? "light_mode" : "dark_mode";
+  }
+}
+initTheme();
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -289,10 +676,19 @@ function el(tag, cls, text) {
 }
 
 function bubble(who) {
-  const m = el("div", "msg " + who);
+  const row = el("div", "msg-row " + who);
+  if (who === "agent") {
+    const avatar = el("div", "msg-avatar");
+    avatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#1a73e8"/>
+    </svg>`;
+    row.appendChild(avatar);
+  }
+  const content = el("div", "msg-content");
   const b = el("div", "bubble");
-  m.appendChild(b);
-  log.appendChild(m);
+  content.appendChild(b);
+  row.appendChild(content);
+  log.appendChild(row);
   log.scrollTop = log.scrollHeight;
   return b;
 }
@@ -300,7 +696,7 @@ function bubble(who) {
 function clearChat() {
   log.innerHTML = "";
   const b = bubble("agent");
-  b.textContent = "Chat cleared. What project would you like to build next?";
+  b.textContent = "Chat reset. What would you like to build next?";
 }
 
 function sendPrompt(text) {
@@ -308,23 +704,68 @@ function sendPrompt(text) {
   form.dispatchEvent(new Event("submit"));
 }
 
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:0.9rem;">check</span> Copied!';
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  });
+}
+
 function linkify(text) {
-  const div = el("div");
-  // Replace markdown links [label](url) and bare URLs /p/<slug>
+  const container = el("div");
   const escaped = text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
   let formatted = escaped.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  formatted = formatted.replace(/(^|\s)(\/p\/[a-zA-Z0-9_-]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
-  formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   
   // Format bold markdown
   formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
-  div.innerHTML = formatted;
-  return div;
+  // Look for prototype paths like /p/studybuddy
+  const protoMatch = text.match(/\/p\/([a-zA-Z0-9_-]+)/);
+  
+  formatted = formatted.replace(/(^|\s)(\/p\/[a-zA-Z0-9_-]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  formatted = formatted.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  
+  const textDiv = el("div");
+  textDiv.innerHTML = formatted;
+  container.appendChild(textDiv);
+
+  // If a prototype slug was found, render an eye-catching Google Material Live Link Card
+  if (protoMatch) {
+    const slug = protoMatch[1];
+    const livePath = `/p/${slug}`;
+    const card = el("div", "live-prototype-card");
+    
+    const info = el("div", "live-proto-info");
+    const tag = el("div", "live-proto-tag", "🚀 Live Prototype Ready");
+    const urlText = el("div", "live-proto-url", window.location.origin + livePath);
+    info.appendChild(tag);
+    info.appendChild(urlText);
+    card.appendChild(info);
+
+    const actions = el("div", "live-proto-actions");
+    const openBtn = el("a", "proto-btn primary");
+    openBtn.href = livePath;
+    openBtn.target = "_blank";
+    openBtn.rel = "noopener";
+    openBtn.innerHTML = `<span>Open Site</span> <span class="material-symbols-outlined" style="font-size:1rem; color:#fff;">open_in_new</span>`;
+    
+    const copyBtn = el("button", "proto-btn secondary");
+    copyBtn.type = "button";
+    copyBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span> <span>Copy</span>`;
+    copyBtn.onclick = () => copyToClipboard(window.location.origin + livePath, copyBtn);
+    
+    actions.appendChild(openBtn);
+    actions.appendChild(copyBtn);
+    card.appendChild(actions);
+    container.appendChild(card);
+  }
+
+  return container;
 }
 
 /* ----------------------------------------------------------------------------
@@ -393,7 +834,7 @@ function buildNode(id, comps, seen) {
       if (!/^https?:\/\//i.test(src)) return null;
       const img = el("img", "a2img");
       img.src = src;
-      img.alt = boundStr(props.alt) || "";
+      img.alt = boundStr(props.alt) || "Project Asset";
       return img;
     }
     case "Icon": {
@@ -455,10 +896,21 @@ form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const text = input.value.trim();
   if (!text) return;
+  
   bubble("user").textContent = text;
   input.value = "";
+  
   const b = bubble("agent");
-  b.innerHTML = '<span style="color:var(--text-secondary); display:flex; align-items:center; gap:0.5rem;"><span class="material-symbols-outlined" style="animation: spin 1s infinite linear;">sync</span> LaunchKit is thinking and building...</span>';
+  b.innerHTML = `
+    <div class="thinking-row">
+      <div class="thinking-sparkle">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+          <path d="M12 2C12 7.52 7.52 12 2 12C7.52 12 12 16.48 12 22C12 16.48 16.48 12 22 12C16.48 12 12 7.52 12 2Z" fill="#1a73e8"/>
+        </svg>
+      </div>
+      <span class="shimmer-text">LaunchKit is designing and building your prototype...</span>
+    </div>
+  `;
   
   try {
     const res = await fetch("/chat", {
@@ -475,12 +927,9 @@ form.addEventListener("submit", async (ev) => {
     }
     renderReply(b, data.parts || []);
   } catch (e) {
-    b.innerHTML = `<span style="color:#ef4444;">Error: ${e.message}</span>`;
+    b.innerHTML = `<span style="color:var(--google-red); font-weight:500;">Error: ${e.message}</span>`;
   }
 });
 </script>
-<style>
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-</style>
 </body>
 </html>

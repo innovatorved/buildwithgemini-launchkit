@@ -8,12 +8,92 @@ from .storage_tools import BUCKET_NAME, PROJECT_ID, get_db, get_project, get_sto
 _genai_client = None
 
 
-def get_genai_client() -> genai.Client:
-    """Initialize Vertex AI GenAI client."""
-    global _genai_client
-    if _genai_client is None:
-        _genai_client = genai.Client(vertexai=True, project=PROJECT_ID, location="us-central1")
-    return _genai_client
+def get_genai_client(location: str = "global") -> genai.Client:
+    """Initialize Vertex AI GenAI client in global region for Nano Banana 2 Lite."""
+    return genai.Client(vertexai=True, project=PROJECT_ID, location=location)
+
+
+def generate_image(
+    prompt: str,
+    project_id: str = "default",
+    asset_name: str = "hero",
+    tool_context: Any = None,
+) -> dict[str, Any]:
+    """Generate an image using gemini-3.1-flash-lite-image (Nano Banana 2 Lite).
+
+    Saves the image to the local Playground artifacts panel and uploads it to public Cloud Storage.
+
+    Args:
+        prompt: Text prompt describing the image to generate.
+        project_id: Project slug identifier for Cloud Storage destination.
+        asset_name: Name of the asset (e.g. 'hero', 'preview', 'feature').
+        tool_context: Optional ADK ToolContext for artifact saving.
+
+    Returns:
+        Dictionary containing the public Cloud Storage URL and status.
+    """
+    client = get_genai_client(location="global")
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.1-flash-lite-image",
+            contents=prompt,
+        )
+        img_bytes = None
+        mime_type = "image/jpeg"
+        if response.candidates and response.candidates[0].content.parts:
+            for part in response.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.data:
+                    img_bytes = part.inline_data.data
+                    mime_type = part.inline_data.mime_type or "image/jpeg"
+                    break
+
+        if not img_bytes:
+            raise ValueError("No image bytes returned by gemini-3.1-flash-lite-image")
+
+        # 1. Save artifact if tool_context is provided
+        if tool_context and hasattr(tool_context, "save_artifact"):
+            try:
+                from google.genai import types
+                part = types.Part.from_bytes(data=img_bytes, mime_type=mime_type)
+                tool_context.save_artifact(f"{asset_name}.jpg", part)
+            except Exception as e:
+                print(f"[media_tools] save_artifact warning: {e}")
+
+        # 2. Upload to public Cloud Storage bucket
+        storage_client = get_storage_client()
+        bucket = storage_client.bucket(BUCKET_NAME)
+        object_path = f"{project_id}/images/{asset_name}.jpg"
+        blob = bucket.blob(object_path)
+        blob.upload_from_string(img_bytes, content_type=mime_type)
+
+        public_url = f"https://storage.googleapis.com/{BUCKET_NAME}/{object_path}"
+
+        # Update Firestore if project exists
+        try:
+            db = get_db()
+            proj_ref = db.collection("projects").document(project_id)
+            doc = proj_ref.get()
+            if doc.exists:
+                proj_ref.update({f"assets.{asset_name}": public_url})
+        except Exception:
+            pass
+
+        return {
+            "status": "success",
+            "model": "gemini-3.1-flash-lite-image",
+            "url": public_url,
+            "asset_name": asset_name,
+            "project_id": project_id,
+        }
+    except Exception as e:
+        print(f"[media_tools] Image generation error: {e}")
+        # Clean fallback to SVG banner if model request fails
+        return {
+            "status": "fallback",
+            "error": str(e),
+            "asset_name": asset_name,
+            "project_id": project_id,
+        }
 
 
 def _generate_svg_banner(name: str, tagline: str, primary_color: str, bg_color: str) -> str:
@@ -77,13 +157,14 @@ def _generate_svg_icon(index: int, primary_color: str) -> str:
 </svg>"""
 
 
-def generate_assets(project_id: str) -> dict[str, Any]:
-    """Generate visual brand assets (hero banner, logo, and 3 feature icons) for a project.
+def generate_assets(project_id: str, tool_context: Any = None) -> dict[str, Any]:
+    """Generate visual brand assets (Nano Banana hero image, logo, and 3 feature icons) for a project.
 
     Uploads the created assets to Cloud Storage under <project_id>/images/ and updates Firestore.
 
     Args:
         project_id: The slug identifier of the project.
+        tool_context: Optional ADK ToolContext for artifact saving.
 
     Returns:
         Dictionary of created asset URLs and paths.
@@ -98,28 +179,41 @@ def generate_assets(project_id: str) -> dict[str, Any]:
     primary = palette.get("primary", "#7C3AED")
     bg = palette.get("bg", "#0F0F14")
 
-    # Try Vertex AI image generation, falling back cleanly to modern vector graphics
     client = get_storage_client()
     bucket = client.bucket(BUCKET_NAME)
 
-    hero_svg = _generate_svg_banner(name, tagline, primary, bg)
-    logo_svg = _generate_svg_logo(name, primary)
-
     assets = {}
 
-    # Upload Hero Banner
-    hero_path = f"{project_id}/images/hero.svg"
-    hero_blob = bucket.blob(hero_path)
-    hero_blob.upload_from_string(hero_svg, content_type="image/svg+xml")
-    assets["hero"] = f"https://storage.googleapis.com/{BUCKET_NAME}/{hero_path}"
+    # 1. Generate Hero Image with Nano Banana 2 Lite (gemini-3.1-flash-lite-image)
+    image_prompt = (
+        f"A modern, high-tech, aesthetically stunning hero banner visual for '{name}', "
+        f"a tech product with tagline '{tagline}'. Sleek futuristic product interface, "
+        f"soft atmospheric lighting in {primary}, clean dark background, 8k render."
+    )
+    img_result = generate_image(
+        prompt=image_prompt,
+        project_id=project_id,
+        asset_name="hero",
+        tool_context=tool_context,
+    )
+    if img_result.get("status") == "success":
+        assets["hero"] = img_result["url"]
+    else:
+        # Fallback to SVG banner
+        hero_svg = _generate_svg_banner(name, tagline, primary, bg)
+        hero_path = f"{project_id}/images/hero.svg"
+        hero_blob = bucket.blob(hero_path)
+        hero_blob.upload_from_string(hero_svg, content_type="image/svg+xml")
+        assets["hero"] = f"https://storage.googleapis.com/{BUCKET_NAME}/{hero_path}"
 
-    # Upload Logo
+    # 2. Upload Logo
+    logo_svg = _generate_svg_logo(name, primary)
     logo_path = f"{project_id}/images/logo.svg"
     logo_blob = bucket.blob(logo_path)
     logo_blob.upload_from_string(logo_svg, content_type="image/svg+xml")
     assets["logo"] = f"https://storage.googleapis.com/{BUCKET_NAME}/{logo_path}"
 
-    # Upload 3 Feature Icons
+    # 3. Upload 3 Feature Icons
     icons = []
     for i in range(3):
         icon_path = f"{project_id}/images/icon_{i+1}.svg"
@@ -140,3 +234,4 @@ def generate_assets(project_id: str) -> dict[str, Any]:
         "project_id": project_id,
         "assets": assets,
     }
+

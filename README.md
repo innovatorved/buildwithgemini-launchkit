@@ -1,48 +1,52 @@
 # 🚀 LaunchKit — Idea-to-Prototype Website Agent
 ### Build with Gemini · Track 3 Project
 
-> **One-liner:** Describe your startup or side-project idea in one sentence → LaunchKit builds a live prototype website with branded assets, a working **waitlist**, and subscriber analytics, all hosted on Google Cloud.
+> **One-liner:** Describe your startup or side-project idea in one sentence → LaunchKit builds a live prototype website with AI-generated visual assets, a working **waitlist**, and subscriber analytics, all hosted on Google Cloud.
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-innovatorved%2Fbuildwithgemini--launchkit-blue?logo=github)](https://github.com/innovatorved/buildwithgemini-launchkit)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](https://www.python.org/)
-[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Firestore%20%7C%20GCS-orange?logo=googlecloud)](https://cloud.google.com/)
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Firestore%20%7C%20GCS%20%7C%20Cloud%20Run-orange?logo=googlecloud)](https://cloud.google.com/)
 [![ADK 2.11](https://img.shields.io/badge/ADK-2.11-green)](https://github.com/google/adk)
 
 ---
 
 ## 1. Overview & Architecture
 
-LaunchKit transforms ideas into interactive, published web prototypes in seconds:
-1. Proposes brand identity, name, tagline, color palette, and 3 key features.
-2. Generates visual assets (hero banner, logo, feature icons) stored in Cloud Storage.
-3. Builds responsive, single-file Tailwind CSS landing pages with embedded waitlist forms.
-4. Serves published pages publicly at `/p/<project-id>`.
-5. Records waitlist signups directly into Cloud Firestore (`/api/signup`).
-6. Analyzes subscriber velocity and generates dark-mode growth charts on demand.
-7. Remembers user brand preferences (colors, themes) across sessions using Memory Bank.
+LaunchKit is an autonomous product builder agent that transforms ideas into published, interactive web prototypes:
+
+1. **Idea to Brand Identity:** Given a one-line idea, LaunchKit proposes a brand name, tagline, 3 key features, target audience persona, and a tailored hex color palette.
+2. **Visual Generation with Nano Banana:** Generates high-resolution hero imagery using **Nano Banana 2 Lite** (`gemini-3.1-flash-lite-image`), alongside branded vector logos and icons, uploaded directly to Google Cloud Storage.
+3. **Responsive Web Prototyping:** Automatically composes single-file responsive Tailwind CSS landing pages with an integrated waitlist form.
+4. **Live Publishing & Versioning:** Saves each page version to Cloud Storage and Firestore, serving them at `/p/<project-id>` without overwriting history.
+5. **Real-Time Waitlist Subscriptions:** Visitors submit their email into the prototype page; submissions are stored instantly in Cloud Firestore via `/api/signup`.
+6. **Analytics & Growth Insights:** Queries Firestore subscribers, computes signup metrics, and renders dark-mode growth trend visualizations.
+7. **Long-Term Memory:** Retains brand preferences, aesthetic choices, and past project details across sessions via Vertex AI Memory Bank.
 
 ```
             Developer / Creator                     Public Visitors
                     │                                      │
                     ▼                                      ▼
   ┌──────────────────────────────────────────────────────────────┐
-  │ Cloud Run — FastAPI Web Proxy                                │
-  │  /                  → A2UI Builder Chat Interface            │
-  │  /p/<id>            → Serves published prototype HTML        │
-  │  /api/signup        → Records waitlist subscriber            │
-  │  /api/projects      → Lists active projects                  │
+  │ Cloud Run — FastAPI Proxy & Web Server                       │
+  │  • /                 → A2UI Builder Chat Interface           │
+  │  • /p/<project-id>   → Serves published prototype HTML       │
+  │  • /api/signup       → Records waitlist subscribers          │
+  │  • /api/projects     → Lists generated projects              │
   └──────────────────────────────┬───────────────────────────────┘
+                                 │ A2A Protocol
                                  ▼
   ┌──────────────────────────────────────────────────────────────┐
-  │ Google ADK Agent: "launchkit" (Gemini 2.5 Flash)             │
-  │  ├─ A2UI v0.8 Rich Surface Callback                          │
-  │  ├─ Memory Bank Callback (session persistence)               │
-  │  └─ Function Tools                                           │
+  │ Agent Platform: "launchkit" (Agent Runtime / Reasoning Eng)  │
+  │  ├─ Model: Vertex AI Gemini 2.5 Flash                        │
+  │  ├─ Media: Nano Banana 2 Lite (gemini-3.1-flash-lite-image)  │
+  │  ├─ Memory: Vertex AI Memory Bank (Long-Term Memory)         │
+  │  ├─ Surface: A2UI v0.8 Basic Catalog Card Callback           │
+  │  └─ 11 Function Tools                                        │
   └──────────────┬──────────────────────┬────────────────────────┘
                  ▼                      ▼
   ┌──────────────────────────┐   ┌───────────────────────────────┐
   │ Cloud Firestore (Native) │   │ Cloud Storage (GCS)           │
-  │  • projects/{id}         │   │  • <id>/images/hero.svg, logo │
+  │  • projects/{id}         │   │  • <id>/images/hero.jpg, logo │
   │  • projects/{id}/versions│   │  • <id>/site/v*/index.html    │
   │  • projects/{id}/signups │   │  • <id>/analytics/growth.png  │
   └──────────────────────────┘   └───────────────────────────────┘
@@ -54,48 +58,70 @@ LaunchKit transforms ideas into interactive, published web prototypes in seconds
 
 | Lab Layer | Technology | Role in LaunchKit |
 |---|---|---|
-| 🤖 **Agent Framework** | Google Agent Development Kit (ADK) & `agents-cli` | Root `launchkit` product builder agent |
-| 🧠 **LLM** | Vertex AI Gemini 2.5 Flash | Idea reasoning, site generation, tone adaptation |
-| 💬 **Sessions & Memory** | ADK Session Service + Vertex AI Memory Bank | Cross-turn memory for design preferences |
-| 🗄️ **Database** | Cloud Firestore Native (`us-central1`) | Multi-tenant projects, page versions, waitlist signups |
-| 🖼️ **Storage** | Google Cloud Storage (GCS) | Hosted SVG assets, versioned HTML pages, analytics charts |
-| 📊 **Analytics** | Matplotlib & Code Sandbox | Automated waitlist subscriber growth plots |
-| 🪟 **Agent-first UI** | A2UI (v0.8 Basic Catalog) | Project overview cards, previews, and quick actions |
-| 🌐 **Frontend & Proxy** | FastAPI & Uvicorn on Cloud Run | Chat interface + `/p/<id>` page serving + `/api/signup` |
+| 🤖 **Agent Framework** | Google Agent Development Kit (ADK) & `agents-cli` | Core agent runtime, tool routing, and orchestration |
+| 🧠 **LLM (Reasoning)** | Vertex AI **Gemini 2.5 Flash** (`gemini-2.5-flash`) | Fast reasoning, product planning, code generation, and adaptation |
+| 🎨 **Media Generation** | **Nano Banana 2 Lite** (`gemini-3.1-flash-lite-image`) | High-res hero imagery and visual brand assets |
+| 💬 **Sessions & Memory** | ADK Session Service + Vertex AI Memory Bank | Cross-turn memory for design preferences, brand styles, and projects |
+| 🗄️ **Structured Data** | Cloud Firestore Native | Multi-tenant projects, page versions, and waitlist signups |
+| 🖼️ **Blob Storage** | Google Cloud Storage (GCS) | Hosted Nano Banana imagery, logos, versioned HTML pages, and charts |
+| 📊 **Analytics** | Matplotlib & Code Execution | Automated waitlist subscriber growth velocity analysis |
+| 🪟 **Agent-first UI** | A2UI (v0.8 Basic Catalog) | Project overview cards, previews, and interactive widgets |
+| 🌐 **Frontend & Proxy** | FastAPI & Uvicorn on Cloud Run | Chat interface, `/p/<id>` page serving, and `/api/signup` endpoint |
 
 ---
 
-## 3. Directory Layout
+## 3. Function Tools
+
+LaunchKit equips 11 production-grade ADK function tools:
+
+| Tool | Module | Description |
+|---|---|---|
+| `create_project` | `storage_tools.py` | Creates a new startup record in Firestore with name, tagline, features, palette, and audience. |
+| `get_project` | `storage_tools.py` | Retrieves project metadata and version history from Firestore. |
+| `list_projects` | `storage_tools.py` | Lists all active startup projects. |
+| `save_page_version` | `storage_tools.py` | Persists a new HTML version to Cloud Storage and updates Firestore. |
+| `add_waitlist_signup` | `storage_tools.py` | Adds a subscriber to the project's waitlist collection. |
+| `get_signups` | `storage_tools.py` | Retrieves all registered waitlist subscribers for a project. |
+| `generate_image` | `media_tools.py` | Generates images via **Nano Banana 2 Lite** (`gemini-3.1-flash-lite-image`), uploads to GCS, and saves ADK artifacts. |
+| `generate_assets` | `media_tools.py` | Generates a complete brand pack (Nano Banana hero image, SVG logo, and 3 feature icons). |
+| `generate_page` | `builder_tools.py` | Generates and publishes responsive Tailwind CSS landing pages with live waitlist forms. |
+| `analyze_waitlist` | `analytics_tools.py` | Analyzes subscriber velocity and generates Matplotlib growth trend plots. |
+| `preload_memory` | ADK Built-in | Recalls user brand style, theme choices, and past feedback from Vertex AI Memory Bank. |
+
+---
+
+## 4. Directory Layout
 
 ```
 launchkit/
 ├── app/
-│   ├── agent.py                 # Root ADK agent with 10 tools & callbacks
+│   ├── agent.py                 # Root ADK agent with Gemini 2.5 Flash, tools & callbacks
 │   ├── a2ui_utils.py            # A2UI v0.8 response callback
 │   ├── fast_api_app.py          # Standard ADK A2A FastAPI server
 │   └── tools/
 │       ├── storage_tools.py     # Firestore projects, versions, & waitlist signups
-│       ├── media_tools.py       # SVG hero banners, logos, and icon assets
+│       ├── media_tools.py       # Nano Banana 2 Lite image generation & asset builder
 │       ├── builder_tools.py     # Tailwind CSS landing page builder
 │       └── analytics_tools.py   # Waitlist analytics & Matplotlib growth chart
 ├── frontend/
-│   ├── main.py                  # FastAPI proxy (chat, /p/<id> serving, /api/signup)
+│   ├── main.py                  # FastAPI proxy (A2A client, /p/<id> serving, /api/signup)
 │   ├── static/
-│   │   └── index.html           # A2UI chat builder with clickable suggestions
+│   │   └── index.html           # A2UI chat builder with native card renderer
 │   ├── requirements.txt         # Lightweight frontend dependencies
 │   └── Dockerfile               # Production container for Cloud Run
 ├── tests/                       # Unit & integration verification tests
 ├── pyproject.toml               # Python dependencies managed with uv
+├── agents-cli-manifest.yaml     # Agent deployment manifest
 └── README.md                    # Project documentation
 ```
 
 ---
 
-## 4. Setup & Local Development
+## 5. Setup & Local Development
 
 ### Prerequisites
 - Python 3.11+
-- `uv` package manager (`curl -LsSf https://astral.sh/uv/install.sh | sh`)
+- [uv](https://astral.sh/uv/) package manager
 - Google Cloud SDK authenticated (`gcloud auth application-default login`)
 
 ### Installation
@@ -105,83 +131,122 @@ launchkit/
 git clone https://github.com/innovatorved/buildwithgemini-launchkit.git
 cd buildwithgemini-launchkit
 
-# Install dependencies with uv
+# Install dependencies
 uv sync
 ```
 
 ### Environment Configuration
 
-Create or verify `.env`:
+Configure `.env` in the repository root:
 
 ```env
 GOOGLE_GENAI_USE_VERTEXAI=1
 GOOGLE_GENAI_USE_ENTERPRISE=true
-GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-04-415aeabf77b7
+GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID
 GOOGLE_CLOUD_LOCATION=us-central1
 LAUNCHKIT_MODEL=gemini-2.5-flash
-LAUNCHKIT_BUCKET=bwg3-qwiklabs-gcp-04-415aeabf77b7
+LAUNCHKIT_BUCKET=YOUR_GCS_BUCKET_NAME
 ```
 
-### Running the App
+### Running Locally
 
-Start the unified LaunchKit web builder and proxy:
+Start the local development server:
 
 ```bash
 uv run python frontend/main.py
 ```
 
-Open your browser to:
-- **Builder Chat:** `http://localhost:8080`
-- **Projects API:** `http://localhost:8080/api/projects`
-- **Published Prototype:** `http://localhost:8080/p/studybuddy`
+Access the application in your browser:
+- **Builder Interface:** Navigate to root `/`
+- **Projects Directory:** Navigate to `/api/projects`
+- **Sample Prototype:** Navigate to `/p/studybuddy` (or any generated project slug)
 
 ---
 
-## 5. User Journey & Example Flow
+## 6. Cloud Deployment
 
-1. **Describe an idea:**  
-   *"An app that helps students find study partners nearby."*
+### 1. Deploy Agent to Agent Runtime (Reasoning Engine)
+
+Deploy the ADK agent to Vertex AI Agent Platform:
+
+```bash
+agents-cli deploy \
+  --deployment-target agent_runtime \
+  --project=YOUR_PROJECT_ID \
+  --region=us-central1 \
+  --update-env-vars="GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,LAUNCHKIT_BUCKET=YOUR_BUCKET,LAUNCHKIT_MODEL=gemini-2.5-flash" \
+  --no-confirm-project
+```
+
+Note the output `Agent Runtime ID` (e.g. `projects/<project-num>/locations/us-central1/reasoningEngines/<id>`).
+
+### 2. Deploy Frontend Proxy to Cloud Run
+
+Deploy the FastAPI container to Cloud Run pointing to the deployed Agent Runtime resource:
+
+```bash
+gcloud run deploy launchkit-frontend \
+  --source frontend \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars="AGENT_ENGINE_RESOURCE_NAME=projects/<project-num>/locations/us-central1/reasoningEngines/<id>,AGENT_DIRECTORY=app,GOOGLE_CLOUD_PROJECT=YOUR_PROJECT_ID,LAUNCHKIT_BUCKET=YOUR_BUCKET"
+```
+
+Ensure the Cloud Run compute service account is granted `roles/aiplatform.user` on the project:
+
+```bash
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="serviceAccount:<project-num>-compute@developer.gserviceaccount.com" \
+  --role="roles/aiplatform.user"
+```
+
+---
+
+## 7. User Journey & Example Flow
+
+1. **Describe an Idea:**  
+   *"Build a prototype site for StudyBuddy — an app that helps students find study partners nearby."*
 2. **Review Plan:**  
-   LaunchKit returns an A2UI card with name (*StudyBuddy*), tagline, 3 features, and hex palette (`#6366F1`, `#0F172A`).
-3. **Build & Publish:**  
-   LaunchKit creates branded SVG assets, writes a responsive landing page, uploads to Cloud Storage, and returns `/p/studybuddy`.
-4. **Collect Signups:**  
-   Visitors visit `http://localhost:8080/p/studybuddy`, enter their email in the waitlist form, and submit. The form sends `POST /api/signup`, saving the record in Firestore.
-5. **Analyze Growth:**  
-   Ask: *"How is my waitlist doing for studybuddy?"*  
-   LaunchKit queries Firestore, calculates signup velocity, plots a dark-mode growth chart with Matplotlib, saves it to Cloud Storage, and presents the link and subscriber metrics.
+   LaunchKit creates the project in Firestore and responds with an A2UI card detailing the name (*StudyBuddy*), tagline, 3 features, target audience, and hex palette.
+3. **Generate Assets:**  
+   Calls `generate_image` using **Nano Banana 2 Lite** (`gemini-3.1-flash-lite-image`) for a high-tech hero banner, plus creates vector logos and feature icons uploaded to Cloud Storage.
+4. **Build & Publish:**  
+   LaunchKit synthesizes a responsive Tailwind landing page with the assets and waitlist form embedded, saving version 1 to GCS and Firestore, and returns `/p/studybuddy`.
+5. **Collect Live Signups:**  
+   Visitors browse `/p/studybuddy`, enter their email into the waitlist form, and submit. The form posts to `/api/signup`, storing the subscriber record in Firestore.
+6. **Analyze Growth:**  
+   Creator asks: *"How is my waitlist doing for studybuddy?"*  
+   LaunchKit queries Firestore, calculates signup velocity, plots a dark-mode growth chart, saves it to GCS, and presents the metrics and chart in chat.
+7. **Iterate & Adapt:**  
+   Creator asks: *"Make it dark mode with neon purple glow and add a pricing tier."*  
+   LaunchKit generates version 2 with updated styling while preserving version 1 in GCS history.
 
 ---
 
-## 6. API Reference
+## 8. API Reference
 
 | Endpoint | Method | Description |
 |---|---|---|
 | `/` | `GET` | Interactive A2UI Chat interface |
-| `/chat` | `POST` | Proxy conversation to agent (`{"message": "..."}`) |
-| `/p/{project_id}` | `GET` | Live published landing page HTML |
+| `/chat` | `POST` | Proxy conversation to agent (`{"message": "...", "user_id": "..."}`) |
+| `/p/{project_id}` | `GET` | Live published landing page HTML from Cloud Storage |
 | `/p/{project_id}/v/{v}` | `GET` | Specific historic version of the landing page |
 | `/api/signup` | `POST` | Waitlist signup (`{"project_id": "...", "email": "..."}`) |
 | `/api/projects` | `GET` | List of all generated projects and versions |
 
 ---
 
-## 7. Cloud Run Deployment
+## 🏅 Earn a Skill Badge
 
-To deploy the frontend to Cloud Run:
+Now that you've finished exploring or building with the workshop, you can earn an official **Build with Gemini** Skill Badge for your Google Developer Profile. It is an Intermediate quiz that takes about **30 minutes** and confirms what you learned here.
 
-```bash
-# Build and deploy frontend
-gcloud run deploy launchkit-frontend \
-  --source frontend \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=qwiklabs-gcp-04-415aeabf77b7,LAUNCHKIT_BUCKET=bwg3-qwiklabs-gcp-04-415aeabf77b7
-```
+Claim it today:
+
+👉 [Claim your Build with Gemini Skill Badge](https://developers.google.com/profile/badges/events/community/build-with-gemini/track3-software-developer/award?utm_source=events-with-google&utm_medium=et&utm_campaign=FY26-Q3-BuildwithGemini&utm_content=track3_appbuilders&utm_term=-)
 
 ---
 
-## 8. License & Attribution
+## 9. License & Attribution
 
 Built for the **Build with Gemini** workshop (Track 3: Prototype Website Agent).  
 Maintained by [@innovatorved](https://github.com/innovatorved).

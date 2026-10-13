@@ -43,6 +43,7 @@ def create_project(
     tagline: str,
     features: list[str],
     palette: dict[str, str],
+    target_audience: str = "",
 ) -> dict[str, Any]:
     """Create a new startup/project record in Firestore.
 
@@ -51,6 +52,7 @@ def create_project(
         tagline: Catchy one-line slogan.
         features: List of 3 key product features.
         palette: Dictionary of hex colors e.g. {"primary": "#7C3AED", "bg": "#0F0F14", "accent": "#38BDF8"}.
+        target_audience: Target demographic or user persona.
 
     Returns:
         Dictionary with project_id and confirmation details.
@@ -64,6 +66,7 @@ def create_project(
         "tagline": tagline,
         "features": features,
         "palette": palette,
+        "target_audience": target_audience,
         "current_version": 0,
         "public_url": f"/p/{project_id}",
         "assets": {},

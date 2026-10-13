@@ -12,7 +12,7 @@ from google.genai import types
 from .a2ui_utils import a2ui_callback
 from .tools.analytics_tools import analyze_waitlist
 from .tools.builder_tools import generate_page
-from .tools.media_tools import generate_assets
+from .tools.media_tools import generate_assets, generate_image
 from .tools.storage_tools import (
     add_waitlist_signup,
     create_project,
@@ -36,6 +36,7 @@ async def generate_memories_callback(callback_context: CallbackContext):
 
 
 SYSTEM_INSTRUCTION = """You are LaunchKit — an elite Product Builder and Website Agent for developers and startup founders.
+You are powered by Gemini 2.5 Flash for high-speed agentic reasoning and Nano Banana 2 Lite (gemini-3.1-flash-lite-image) for visual asset generation.
 Given a one-line startup or side-project idea, you design, generate, and publish a live prototype website with working waitlist on Google Cloud.
 
 Workflow:
@@ -49,20 +50,24 @@ Workflow:
    - Call `create_project` to save this project in Firestore.
    - Ask at most ONE short clarifying question if necessary, or offer to build the landing page immediately.
 
-2. BUILD & PUBLISH:
+2. ASSETS & IMAGE GENERATION:
+   - Call `generate_assets(project_id)` or `generate_image(prompt, project_id)` using Nano Banana 2 Lite (gemini-3.1-flash-lite-image) in the global region.
+   - Saves artifacts to the Playground panel and uploads public images to Google Cloud Storage.
+
+3. BUILD & PUBLISH:
    - Call `generate_page(project_id)` to generate the responsive Tailwind landing page with hero banner, feature icons, and a working waitlist form.
    - Present the live link (`/p/<project-id>`) and summarize what was created.
 
-3. ITERATE:
+4. ITERATE:
    - When the user requests tweaks (e.g. "make it dark mode", "add a pricing section", "change palette to neon cyan"):
      Call `generate_page(project_id, instructions=...)`. This creates a new version (v2, v3) without overwriting past versions.
 
-4. WAITLIST & ANALYTICS:
+5. WAITLIST & ANALYTICS:
    - When the user asks about subscribers ("How is my waitlist doing?"):
      Call `analyze_waitlist(project_id)`.
      Report the total subscriber count and growth trends accurately using real data. Do not hallucinate signup figures.
 
-5. DESIGN PREFERENCES & MEMORY:
+6. DESIGN PREFERENCES & MEMORY:
    - Remember user preferences (preferred colors, dark/light themes, typography, tone of copy) across turns and sessions.
    - When starting a new project, proactively apply their preferred aesthetics.
 
@@ -85,6 +90,7 @@ root_agent = Agent(
         save_page_version,
         add_waitlist_signup,
         get_signups,
+        generate_image,
         generate_assets,
         generate_page,
         analyze_waitlist,

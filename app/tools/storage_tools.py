@@ -7,7 +7,13 @@ from typing import Any
 from google.cloud import firestore
 from google.cloud import storage
 
-PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "qwiklabs-gcp-04-415aeabf77b7")
+def _resolve_project_id() -> str:
+    proj = os.getenv("LAUNCHKIT_PROJECT_ID") or os.getenv("GOOGLE_CLOUD_PROJECT") or "qwiklabs-gcp-04-415aeabf77b7"
+    if proj.isdigit():
+        return "qwiklabs-gcp-04-415aeabf77b7"
+    return proj
+
+PROJECT_ID = _resolve_project_id()
 BUCKET_NAME = os.getenv("LAUNCHKIT_BUCKET", "bwg3-qwiklabs-gcp-04-415aeabf77b7")
 
 _db = None
@@ -18,7 +24,7 @@ def get_db() -> firestore.Client:
     """Lazy initialization of Firestore client."""
     global _db
     if _db is None:
-        _db = firestore.Client(project=PROJECT_ID)
+        _db = firestore.Client(project=_resolve_project_id())
     return _db
 
 
@@ -26,7 +32,7 @@ def get_storage_client() -> storage.Client:
     """Lazy initialization of Cloud Storage client."""
     global _storage_client
     if _storage_client is None:
-        _storage_client = storage.Client(project=PROJECT_ID)
+        _storage_client = storage.Client(project=_resolve_project_id())
     return _storage_client
 
 

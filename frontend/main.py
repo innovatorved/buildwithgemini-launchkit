@@ -35,7 +35,13 @@ if str(ROOT_DIR) not in sys.path:
 load_dotenv(ROOT_DIR / ".env")
 
 # Cloud config
-PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "qwiklabs-gcp-04-415aeabf77b7")
+def _resolve_project_id() -> str:
+    proj = os.environ.get("LAUNCHKIT_PROJECT_ID") or os.environ.get("GOOGLE_CLOUD_PROJECT") or "qwiklabs-gcp-04-415aeabf77b7"
+    if proj.isdigit():
+        return "qwiklabs-gcp-04-415aeabf77b7"
+    return proj
+
+PROJECT_ID = _resolve_project_id()
 BUCKET_NAME = os.environ.get("LAUNCHKIT_BUCKET", "bwg3-qwiklabs-gcp-04-415aeabf77b7")
 RESOURCE = os.environ.get("AGENT_ENGINE_RESOURCE_NAME")
 AGENT_DIRECTORY = os.environ.get("AGENT_DIRECTORY", "app")
@@ -78,23 +84,26 @@ app.add_middleware(
 
 
 class SignupRequest(BaseModel):
-    project_id: str
+    project_id: Optional[str] = None
     email: str
     name: Optional[str] = None
     source: Optional[str] = "landing_page"
 
 
 @app.post("/api/signup")
-async def waitlist_signup(req: SignupRequest):
+async def waitlist_signup(req: SignupRequest, request: Request, project: Optional[str] = None):
     """Save user waitlist signup directly to Cloud Firestore."""
+    target_project = req.project_id or project or request.query_params.get("project")
+    if not target_project:
+        raise HTTPException(status_code=400, detail="A valid project ID is required.")
     if not req.email or "@" not in req.email:
         raise HTTPException(status_code=400, detail="A valid email address is required.")
     db = get_db()
-    proj_ref = db.collection("projects").document(req.project_id)
+    proj_ref = db.collection("projects").document(target_project)
     proj_doc = proj_ref.get()
     if not proj_doc.exists:
         raise HTTPException(
-            status_code=404, detail=f"Project '{req.project_id}' does not exist."
+            status_code=404, detail=f"Project '{target_project}' does not exist."
         )
 
     signup_id = str(uuid.uuid4())
@@ -111,7 +120,7 @@ async def waitlist_signup(req: SignupRequest):
     proj_ref.collection("signups").document(signup_id).set(signup_data)
     return {
         "status": "success",
-        "message": f"Thanks for joining! You are on the waitlist for {req.project_id}.",
+        "message": f"Thanks for joining! You are on the waitlist for {target_project}.",
         "signup_id": signup_id,
         "created_at": now_iso,
     }
@@ -123,13 +132,7 @@ async def serve_project_page(project_id: str):
     client = get_storage()
     bucket = client.bucket(BUCKET_NAME)
 
-    # 1. Try reading latest HTML directly from GCS
-    latest_blob = bucket.blob(f"{project_id}/site/latest/index.html")
-    if latest_blob.exists():
-        content = latest_blob.download_as_text()
-        return HTMLResponse(content=content, status_code=200)
-
-    # 2. Check Firestore project doc for version
+    # 1. Prefer Firestore project doc current_version to guarantee latest content
     db = get_db()
     proj_doc = db.collection("projects").document(project_id).get()
     if proj_doc.exists:
@@ -138,7 +141,21 @@ async def serve_project_page(project_id: str):
         if curr_v:
             v_blob = bucket.blob(f"{project_id}/site/v{curr_v}/index.html")
             if v_blob.exists():
-                return HTMLResponse(content=v_blob.download_as_text(), status_code=200)
+                return HTMLResponse(
+                    content=v_blob.download_as_text(),
+                    status_code=200,
+                    headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+                )
+
+    # 2. Fallback to reading latest HTML directly from GCS
+    latest_blob = bucket.blob(f"{project_id}/site/latest/index.html")
+    if latest_blob.exists():
+        content = latest_blob.download_as_text()
+        return HTMLResponse(
+            content=content,
+            status_code=200,
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+        )
 
     # Not found placeholder
     not_found_html = f"""<!DOCTYPE html>
@@ -169,9 +186,13 @@ async def serve_project_version(project_id: str, version_num: int):
     if not blob.exists():
         raise HTTPException(
             status_code=404,
-            detail=f"Version {version_num} for project '{project_id}' not found.",
+            detail=f"Version v{version_num} for project '{project_id}' not found.",
         )
-    return HTMLResponse(content=blob.download_as_text(), status_code=200)
+    return HTMLResponse(
+        content=blob.download_as_text(),
+        status_code=200,
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 
 @app.get("/api/projects")
@@ -200,22 +221,70 @@ _local_sessions: dict[str, str] = {}
 
 def _extract_parts_from_a2a(parts: list) -> list[dict]:
     """Turn A2A response parts into structured parts for chat UI."""
-    from a2a.types import FilePart, TextPart
-
     out: list[dict] = []
+    if not parts:
+        return out
+
     for p in parts:
         root = getattr(p, "root", p)
-        if isinstance(root, TextPart) and getattr(root, "text", None):
-            out.append({"kind": "text", "text": root.text})
-        elif getattr(root, "data", None) is not None:
-            meta = getattr(root, "metadata", None) or {}
+
+        # 1. Text extraction
+        text = getattr(root, "text", None) or getattr(p, "text", None)
+        if text:
+            # Check if text contains wrapped A2UI JSON
+            a2ui_matches = re.findall(
+                r"<a2a_datapart_json>(.*?)</a2a_datapart_json>",
+                text,
+                re.DOTALL,
+            )
+            if a2ui_matches:
+                for m in a2ui_matches:
+                    try:
+                        parsed = json.loads(m)
+                        payload = parsed.get("data", parsed)
+                        out.append({"kind": "a2ui", "data": payload})
+                    except Exception:
+                        pass
+                clean_text = re.sub(
+                    r"<a2a_datapart_json>.*?</a2a_datapart_json>",
+                    "",
+                    text,
+                    flags=re.DOTALL,
+                ).strip()
+                if clean_text:
+                    out.append({"kind": "text", "text": clean_text})
+            else:
+                out.append({"kind": "text", "text": text})
+
+        # 2. Data part (A2UI)
+        data = getattr(root, "data", None) or getattr(p, "data", None)
+        if data is not None:
+            if isinstance(data, bytes):
+                try:
+                    data = json.loads(data.decode("utf-8"))
+                except Exception:
+                    pass
+            meta = getattr(root, "metadata", None) or getattr(p, "metadata", None) or {}
             mime = meta.get("mimeType") if isinstance(meta, dict) else None
-            if mime == _A2UI_MIME:
-                out.append({"kind": "a2ui", "data": root.data})
-        elif isinstance(root, FilePart):
-            uri = getattr(getattr(root, "file", None), "uri", None)
+            if mime == _A2UI_MIME or (
+                isinstance(data, dict)
+                and any(
+                    k in data
+                    for k in ("beginRendering", "surfaceUpdate", "dataModelUpdate")
+                )
+            ):
+                out.append({"kind": "a2ui", "data": data})
+
+        # 3. File part or URI
+        file_obj = getattr(root, "file", None) or getattr(p, "file", None)
+        if file_obj:
+            uri = getattr(file_obj, "uri", None)
             if uri:
                 out.append({"kind": "text", "text": uri})
+        url = getattr(root, "url", None) or getattr(p, "url", None)
+        if url and not text:
+            out.append({"kind": "text", "text": url})
+
     return out
 
 
@@ -288,83 +357,116 @@ async def chat(req: Request):
     user_id = body.get("user_id") or "web-user"
 
     if not message:
-        return JSONResponse({"parts": [{"kind": "text", "text": "Please provide an idea or message."}]})
+        return JSONResponse(
+            {"parts": [{"kind": "text", "text": "Please provide an idea or message."}]}
+        )
+
+    parts: list[dict] = []
 
     # If deployed with AGENT_ENGINE_RESOURCE_NAME, use A2A client proxy
     if RESOURCE:
-        import httpx
-        from a2a.client import ClientConfig, ClientFactory
-        from a2a.types import (
-            AgentCard,
-            Message,
-            Part,
-            Role,
-            TaskArtifactUpdateEvent,
-            TextPart,
-            TransportProtocol,
-        )
+        try:
+            import httpx
+            from a2a.client import ClientConfig, ClientFactory
+            import a2a.types as a2a_types
 
-        location = RESOURCE.split("/locations/")[1].split("/")[0]
-        a2a_base = (
-            f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/"
-            f"{RESOURCE}/api/a2a/{AGENT_DIRECTORY}"
-        )
-        a2a_card_url = f"{a2a_base}/.well-known/agent-card.json"
+            location = RESOURCE.split("/locations/")[1].split("/")[0]
+            a2a_base = (
+                f"https://{location}-aiplatform.googleapis.com/reasoningEngines/v1/"
+                f"{RESOURCE}/api/a2a/{AGENT_DIRECTORY}"
+            )
+            a2a_card_url = f"{a2a_base}/.well-known/agent-card.json"
 
-        creds, _ = google.auth.default(
-            scopes=["https://www.googleapis.com/auth/cloud-platform"]
-        )
-        creds.refresh(google.auth.transport.requests.Request())
-        headers = {
-            "Authorization": f"Bearer {creds.token}",
-            "Content-Type": "application/json",
-        }
+            creds, _ = google.auth.default(
+                scopes=["https://www.googleapis.com/auth/cloud-platform"]
+            )
+            creds.refresh(google.auth.transport.requests.Request())
+            headers = {
+                "Authorization": f"Bearer {creds.token}",
+                "Content-Type": "application/json",
+            }
 
-        async with httpx.AsyncClient(headers=headers, timeout=120) as client:
-            global _card
-            if _card is None:
-                resp = await client.get(a2a_card_url)
-                resp.raise_for_status()
-                card = AgentCard(**resp.json())
-                card.url = a2a_base
-                _card = card
+            async with httpx.AsyncClient(headers=headers, timeout=120) as client:
+                global _card
+                if _card is None:
+                    resp = await client.get(a2a_card_url)
+                    resp.raise_for_status()
+                    card = a2a_types.AgentCard(**resp.json())
+                    card.url = a2a_base
+                    _card = card
 
-            factory = ClientFactory(
-                ClientConfig(
-                    supported_transports=[
-                        TransportProtocol.jsonrpc,
-                        TransportProtocol.http_json,
-                    ],
-                    httpx_client=client,
+                # Build supported transports
+                transports = []
+                for t_name in ("jsonrpc", "http_json", "TRANSPORT_PROTOCOL_JSONRPC", "TRANSPORT_PROTOCOL_HTTP_JSON"):
+                    if hasattr(a2a_types.TransportProtocol, t_name):
+                        transports.append(getattr(a2a_types.TransportProtocol, t_name))
+
+                factory = ClientFactory(
+                    ClientConfig(
+                        supported_transports=transports or [a2a_types.TransportProtocol.jsonrpc],
+                        httpx_client=client,
+                    )
                 )
-            )
-            a2a_client = factory.create(_card)
+                a2a_client = factory.create(_card)
 
-            msg = Message(
-                message_id=str(uuid.uuid4()),
-                role=Role.user,
-                parts=[Part(root=TextPart(text=message))],
-                context_id=_contexts.get(user_id),
-            )
+                # Determine part construction
+                if hasattr(a2a_types, "TextPart"):
+                    part_item = a2a_types.Part(root=a2a_types.TextPart(text=message))
+                else:
+                    part_item = a2a_types.Part(text=message)
 
-            parts = []
-            last_task = None
-            got_artifact_update = False
-            async for event in a2a_client.send_message(msg):
-                if not isinstance(event, tuple):
-                    continue
-                task, update = event
-                if task is not None:
-                    last_task = task
-                    if getattr(task, "context_id", None):
-                        _contexts[user_id] = task.context_id
-                if isinstance(update, TaskArtifactUpdateEvent):
-                    got_artifact_update = True
-                    parts.extend(_extract_parts_from_a2a(update.artifact.parts))
+                role_user = getattr(a2a_types.Role, "user", getattr(a2a_types.Role, "ROLE_USER", "user"))
 
-            if not got_artifact_update and last_task is not None:
-                for artifact in getattr(last_task, "artifacts", None) or []:
-                    parts.extend(_extract_parts_from_a2a(artifact.parts))
+                msg = a2a_types.Message(
+                    message_id=str(uuid.uuid4()),
+                    role=role_user,
+                    parts=[part_item],
+                    context_id=_contexts.get(user_id),
+                )
+
+                last_task = None
+                async for event in a2a_client.send_message(msg):
+                    if not isinstance(event, tuple):
+                        continue
+                    task, update = event
+                    if task is not None:
+                        last_task = task
+                        if getattr(task, "context_id", None):
+                            _contexts[user_id] = task.context_id
+
+                    # 1. Handle TaskArtifactUpdateEvent
+                    if isinstance(update, getattr(a2a_types, "TaskArtifactUpdateEvent", object)):
+                        if hasattr(update, "artifact") and hasattr(update.artifact, "parts"):
+                            parts.extend(_extract_parts_from_a2a(update.artifact.parts))
+
+                    # 2. Handle TaskStatusUpdateEvent with status.message
+                    if hasattr(update, "status") and hasattr(update.status, "message"):
+                        msg_obj = update.status.message
+                        if hasattr(msg_obj, "parts") and msg_obj.parts:
+                            parts.extend(_extract_parts_from_a2a(msg_obj.parts))
+
+                # Non-streaming fallback: inspect last_task
+                if not parts and last_task is not None:
+                    # Check task status message
+                    if hasattr(last_task, "status") and hasattr(last_task.status, "message"):
+                        msg_obj = last_task.status.message
+                        if hasattr(msg_obj, "parts") and msg_obj.parts:
+                            parts.extend(_extract_parts_from_a2a(msg_obj.parts))
+
+                    # Check task artifacts
+                    for artifact in getattr(last_task, "artifacts", None) or []:
+                        parts.extend(_extract_parts_from_a2a(getattr(artifact, "parts", [])))
+
+                    # Check task history
+                    if not parts and hasattr(last_task, "history"):
+                        for h_msg in getattr(last_task, "history", []):
+                            h_role = str(getattr(h_msg, "role", "")).lower()
+                            if "agent" in h_role:
+                                parts.extend(_extract_parts_from_a2a(getattr(h_msg, "parts", [])))
+
+        except Exception as exc:
+            print(f"[A2A Chat Error] {type(exc).__name__}: {exc}", flush=True)
+            parts = [{"kind": "text", "text": f"⚠️ Agent Runtime Error: {str(exc)}"}]
     else:
         # Local direct mode
         parts = await _run_local_chat(message, user_id)

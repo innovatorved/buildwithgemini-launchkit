@@ -183,7 +183,7 @@ def _build_html_template(
         const res = await fetch('/api/signup?project={project_id}', {{
           method: 'POST',
           headers: {{ 'Content-Type': 'application/json' }},
-          body: JSON.stringify({{ email: email, name: name }})
+          body: JSON.stringify({{ email: email, name: name, project_id: '{project_id}' }})
         }});
         const data = await res.json();
         msg.classList.remove('hidden', 'bg-red-500/20', 'text-red-300', 'bg-emerald-500/20', 'text-emerald-300');

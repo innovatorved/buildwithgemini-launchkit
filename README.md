@@ -9,14 +9,10 @@
 
 <br/>
 
-![Build with Gemini](https://img.shields.io/badge/Build%20with%20Gemini-World%20Tour-4285F4?logo=google&logoColor=white)
-![Track 3](https://img.shields.io/badge/Track%203-Agent--First%20Apps-EA4335)
-![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Firestore%20%7C%20GCS%20%7C%20Cloud%20Run-4285F4?logo=googlecloud&logoColor=white)
-![Built with ADK](https://img.shields.io/badge/Built%20with-ADK%20%2B%20agents--cli-34A853)
 [![GitHub Repo](https://img.shields.io/badge/GitHub-innovatorved%2Fbuildwithgemini--launchkit-blue?logo=github)](https://github.com/innovatorved/buildwithgemini-launchkit)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python)](https://www.python.org/)
-
-<sub>📖 <a href="https://cszhu.github.io/build-with-gemini/">Lab Guide</a> · 🛠️ <a href="https://google.github.io/agents-cli/guide/getting-started/">agents-cli</a> · 🤖 <a href="https://google.github.io/adk-docs/">ADK</a> · 🏅 <a href="https://developers.google.com/profile/badges/events/community/build-with-gemini/track3-software-developer/award?utm_source=events-with-google&utm_medium=et&utm_campaign=FY26-Q3-BuildwithGemini&utm_content=track3_appbuilders&utm_term=-">Claim Skill Badge</a></sub>
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%7C%20Firestore%20%7C%20GCS%20%7C%20Cloud%20Run-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/)
+[![Built with ADK](https://img.shields.io/badge/Built%20with-ADK%20%2B%20agents--cli-34A853)](https://github.com/google/adk)
 
 </div>
 
@@ -248,17 +244,8 @@ gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
 
 ---
 
-## 🏅 Earn a Skill Badge
-
-Now that you've finished exploring or building with the workshop, you can earn an official **Build with Gemini** Skill Badge for your Google Developer Profile. It is an Intermediate quiz that takes about **30 minutes** and confirms what you learned here.
-
-Claim it today:
-
-👉 [Claim your Build with Gemini Skill Badge](https://developers.google.com/profile/badges/events/community/build-with-gemini/track3-software-developer/award?utm_source=events-with-google&utm_medium=et&utm_campaign=FY26-Q3-BuildwithGemini&utm_content=track3_appbuilders&utm_term=-)
-
----
-
-## 9. License & Attribution
+## License & Attribution
 
 Built for the **Build with Gemini** workshop (Track 3: Prototype Website Agent).  
 Maintained by [@innovatorved](https://github.com/innovatorved).
+
